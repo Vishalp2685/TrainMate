@@ -216,17 +216,21 @@ app.config.from_object(Config)
 
 scheduler = APScheduler()
 
-@scheduler.task('interval', id='db_status', minutes=1)
+@scheduler.task('interval', id='db_status', minutes=5)
 def db_status():
     try:
         with engine.connect() as conn:
-            result = conn.execute(text("Select unique_id from users where unique_id = 1")).fetchone()
-            print(result)
+            result = conn.execute(text("SELECT unique_id FROM users WHERE unique_id = 1")).fetchone()
+            if result:
+                logging.info(f"Database connection OK | Sample User ID: {result.unique_id}")
+            else:
+                logging.warning("Database connected but user_id=1 not found.")
     except Exception as e:
-        print({'status':'error','message':f"Database error: {e}"})
+        logging.error(f"Database check failed: {e}")
+
 
 scheduler.init_app(app)
 scheduler.start()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
