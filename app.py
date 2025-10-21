@@ -222,8 +222,10 @@ def db_status():
         with engine.connect() as conn:
             result = conn.execute(text("SELECT unique_id FROM users WHERE unique_id = 1")).fetchone()
             if result:
+                print(f"Database connection OK | Sample User ID: {result.unique_id}")
                 logging.info(f"Database connection OK | Sample User ID: {result.unique_id}")
             else:
+                print("Database connected but user_id=1 not found.")
                 logging.warning("Database connected but user_id=1 not found.")
     except Exception as e:
         logging.error(f"Database check failed: {e}")
