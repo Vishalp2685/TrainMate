@@ -217,6 +217,7 @@ app.config.from_object(Config)
 scheduler = APScheduler()
 
 @scheduler.task('interval', id='db_status', minutes=5)
+@app.route('/db_status',methods = ['GET'])
 def db_status():
     try:
         with engine.connect() as conn:
@@ -224,9 +225,11 @@ def db_status():
             if result:
                 print(f"Database connection OK | Sample User ID: {result.unique_id}")
                 logging.info(f"Database connection OK | Sample User ID: {result.unique_id}")
+                return "Status: Running"
             else:
                 print("Database connected but user_id=1 not found.")
                 logging.warning("Database connected but user_id=1 not found.")
+                return "Status: not running"
     except Exception as e:
         logging.error(f"Database check failed: {e}")
 
