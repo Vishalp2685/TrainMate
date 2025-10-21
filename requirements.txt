@@ -4,3 +4,5 @@ SQLAlchemy
 psycopg2-binary
 bcrypt
 gunicorn
+APScheduler
+flask_apscheduler

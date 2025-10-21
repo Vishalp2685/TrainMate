@@ -4,6 +4,8 @@ from sqlalchemy import create_engine, text
 import logging
 import bcrypt
 import os
+import time
+from flask_apscheduler import APScheduler
 
 app = Flask(__name__)
 CORS(app)  # Enable cross-origin requests
@@ -202,16 +204,29 @@ def get_user_details(email):
         logging.error(f"Error getting user details: {e}")
         return jsonify({})
 
-
-@app.route('/ping', methods=['GET'])
+@app.route('/ping',methods = ['GET'])
 def ping():
+
+    return jsonify({"status": 'service up'})
+
+class Config:
+    SCHEDULER_API_ENABLED = True
+
+app.config.from_object(Config)
+
+scheduler = APScheduler()
+
+@scheduler.task('interval', id='db_status', minutes=1)
+def db_status():
     try:
         with engine.connect() as conn:
-            result = conn.execute(text("SELECT unique_id FROM users LIMIT 1")).fetchall()
-        return jsonify([dict(row._mapping) for row in result])
+            result = conn.execute(text("Select unique_id from users where unique_id = 1")).fetchone()
+            print(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Database error: {e}"}), 500
+        print({'status':'error','message':f"Database error: {e}"})
 
+scheduler.init_app(app)
+scheduler.start()
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)
