@@ -1,8 +1,6 @@
-Flask
-Flask-Cors
-SQLAlchemy
-psycopg2-binary
+psycopg2
+fastapi
+uvicorn[standard]
+sqlalchemy
 bcrypt
 gunicorn
-APScheduler
-flask_apscheduler
