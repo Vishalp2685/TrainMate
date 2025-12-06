@@ -4,3 +4,4 @@ uvicorn[standard]
 sqlalchemy
 bcrypt
 gunicorn
+pydantic[email]
