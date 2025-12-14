@@ -3,12 +3,6 @@ from pydantic import BaseModel,Field,EmailStr
 class Login(BaseModel):
     password: str 
 
-class Mobile(Login):
-    mob_no: str = Field(..., min_length=10,max_length=10,pattern=r'^\d{10}$')
-
-class Email(Login):
-    email: EmailStr
-
 class User_details(BaseModel):
     first_name: str = Field(...,min_length=1)
     last_name: str = Field(...,min_length=1)
@@ -26,7 +20,9 @@ class ResponsePayLoad(BaseModel):
     comments: str
 
 class LoginResponsePayLoad(ResponsePayLoad):
-    data: User_details|None
+    data: LoginResponse | None = None
+    access_token: str | None = None
+    refresh_token: str | None = None
 
 class TravelData(BaseModel):
     user_id: int
@@ -38,3 +34,11 @@ class TravelData(BaseModel):
     office_long: float
     start_time: str
     end_time: str
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+class RefreshTokenResponse(BaseModel):
+    status:bool
+    comments:str
+    access_token: str

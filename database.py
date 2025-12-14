@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine,text
-import bcrypt
+from Utils.utils import verify_passwords,encrypt
 import os
 from dotenv import load_dotenv
 
@@ -11,9 +11,6 @@ DATABASE_URL = f"postgresql://postgres.dlbtacxmxlgsjvmtrlsl:{PASSWORD}@aws-1-ap-
 
 engine = create_engine(DATABASE_URL)
 
-def encrypt(password): # Password encryption
-    encrypted_pass = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    return encrypted_pass.decode('utf-8')
 
 def user_exist(email,mob_no)->bool|str: # return True if user is found
     try:
@@ -56,6 +53,7 @@ def create_user(first_name,last_name,email,mob_no,password)-> dict: # returns Fa
         return {'status':False, 'comments':'(error): while registering'}
         
 
+
 def authenticate_user(email, mob_no, password) -> dict:
     if email:
         query = "SELECT * FROM users WHERE email = :email"
@@ -70,9 +68,10 @@ def authenticate_user(email, mob_no, password) -> dict:
         if not data:
             return {'status': False, 'comments': 'User not found','data':data}
         data = dict(data._mapping)
-        stored_hash = data['password']  # or data.password depending on data type
+        hashed_password = data['password'] 
         del data['password']
-        if bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
+        if verify_passwords(password,hashed_password):
+            print(data)
             return {'status': True, 'comments': 'user verified','data':data}
         else:
             return {'status': False, 'comments': 'Invalid password','data':None}
