@@ -104,3 +104,12 @@ class FriendDetails(BaseModel):
 
 class FriendListPayload(ResponsePayLoad):
     friends:list[FriendDetails|None]
+
+class SenderId(BaseModel):
+    sender_id: int
+
+class ReceiverId(BaseModel):
+    receiver_id: int
+
+class FriendIDd(BaseModel):
+    friend_id: int

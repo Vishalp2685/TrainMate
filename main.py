@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from database import *
-from schemas import Register, ResponsePayLoad, TravelData, LoginResponsePayLoad, RefreshTokenRequest,RefreshTokenResponse,Recommendations,PendingRequestPayload,SentRequestPayload,FriendListPayload
+from schemas import Register, ResponsePayLoad, TravelData, LoginResponsePayLoad, RefreshTokenRequest,RefreshTokenResponse,Recommendations,PendingRequestPayload,SentRequestPayload,FriendListPayload,SenderId,ReceiverId,FriendIDd
 from auth.auth import create_access_token, create_refresh_token, verify_refresh_token, get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from reccomend import get_reccomendations
@@ -86,22 +86,20 @@ async def recommendations(userid:str = Depends(get_current_user)) -> dict:
 #_________________________________________________________________________________________________________________________________________#
 
 @app.post('/send_friend_request',response_model=ResponsePayLoad)
-async def send_request(sender_id:int,receiver_id:int,current_user:str = Depends(get_current_user))->dict:
-    if int(current_user) != sender_id:
-        return ResponsePayLoad(
-            status=False, comments='Auth error'
-        )
-    response = are_friends(sender_id,receiver_id)
+async def send_request(receiver_id:ReceiverId,current_user:int = Depends(get_current_user))->ResponsePayLoad:
+    receiver_id = receiver_id.receiver_id
+    response = are_friends(current_user,receiver_id)
+    
     if response == True or response == 'Error':
         return ResponsePayLoad(
             status=False,comments='Users already friends or Failed to send request'
         )
-    response = is_blocked(sender_id,receiver_id)
+    response = is_blocked(current_user,receiver_id)
     if response == True or response == 'Error':
         return ResponsePayLoad(
             status=False,comments='User is blocked or Failed to send request'
         )
-    if send_friend_request(sender_id=sender_id,receiver_id=receiver_id):
+    if send_friend_request(sender_id=current_user,receiver_id=receiver_id):
         return ResponsePayLoad(
             status=True,comments='friend request sent successfully'
         )
@@ -111,11 +109,8 @@ async def send_request(sender_id:int,receiver_id:int,current_user:str = Depends(
         )
 
 @app.post('/get_pending_requests',response_model=PendingRequestPayload)
-async def pending_requests(user_id:int,current_user:str=Depends(get_current_user)):
-    if int(current_user) != user_id:
-        return PendingRequestPayload(
-            status=False,comments='User not authorized',request=[]
-        )
+async def pending_requests(current_user:int=Depends(get_current_user)):
+
     request = get_pending_requests(user_id=int(current_user))
     if request['status']:
         request = convert_pending_reuqest_to_dict(requests=request['requests'])
@@ -128,11 +123,8 @@ async def pending_requests(user_id:int,current_user:str=Depends(get_current_user
         )
     
 @app.post('/get_pending_sent_requests', response_model=SentRequestPayload)
-async def get_sent_request(user_id: int, current_user: str = Depends(get_current_user)):
-    if int(current_user) != user_id:
-        return SentRequestPayload(
-            status=False, comments='User not authorized', requests=[]
-        )
+async def get_sent_request(current_user: str = Depends(get_current_user)):
+
     status, requests = get_pending_sent_requests(user_id=current_user)
     if status:
         requests = convert_sent_pending_to_dict(requests)
@@ -144,110 +136,91 @@ async def get_sent_request(user_id: int, current_user: str = Depends(get_current
             status=status, comments='Failed to fetch the requests', requests=[]
         )
     
-@app.post('/accept_friend_request',response_model=ResponsePayLoad)
-async def friend_request_accept(sender_id:int,user_id:int,current_user:str = Depends(get_current_user)):
-    if int(current_user) != user_id:
+@app.post('/accept_friend_request', response_model=ResponsePayLoad)
+async def friend_request_accept(sender_id: SenderId,current_user: int = Depends(get_current_user)):
+
+    if are_friends(friend_id=sender_id, user_id=current_user):
         return ResponsePayLoad(
-            status=False,comments='User not Authorized'
+            status=False,
+            comments='Users are already friends'
         )
-    else:
-        response = are_friends(friend_id=sender_id,user_id=user_id)
-        if response == True or response == 'Error':
-            return ResponsePayLoad(
-                status=False,comments='Users already friends or failed to accept friend request'
-            )
-        response = is_blocked(sender_id=sender_id,receiver_id=user_id)
-        if response == True or response == 'Error':
-            return ResponsePayLoad(
-                status=False,comments='User blocked or +failed to accept friend request'
-            )
-        status =  accept_friend_request(sender_id=sender_id,receiver_id=user_id)
+
+    if is_blocked(sender_id=sender_id, receiver_id=current_user):
         return ResponsePayLoad(
-            status=status,comments='Friend request accepted successfully' if status else 'Failed to send a friend request'
-        ) 
-    
+            status=False,
+            comments='User is blocked'
+        )
+
+    status = accept_friend_request(
+        sender_id=sender_id,
+        receiver_id=current_user
+    )
+
+    return ResponsePayLoad(
+        status=status,
+        comments='Friend request accepted successfully'
+        if status else
+        'Failed to accept friend request'
+    )
 
 @app.post('/reject_friend_request',response_model = ResponsePayLoad)
-async def decline_friend_request(user_id:int,sender_id:int,current_user:str=Depends(get_current_user)):
-    if int(current_user) != user_id:
+async def decline_friend_request(sender_id:SenderId,current_user:int=Depends(get_current_user)):
+    if reject_friend_request(sender_id=sender_id,user_id=current_user):
         return ResponsePayLoad(
-            status=False, comments='User not Authorized'
+            status= True, comments='Successfully rejected the friend request'
         )
     else:
-        if reject_friend_request(sender_id=sender_id,user_id=user_id):
-            return ResponsePayLoad(
-                status= True, comments='Successfully rejected the friend request'
-            )
-        else:
-            return ResponsePayLoad(
-                status = False, comments= ' Failed to reject the friend request'
-            )
+        return ResponsePayLoad(
+            status = False, comments= ' Failed to reject the friend request'
+        )
         
 @app.post('/cancel_friend_request',response_model = ResponsePayLoad)
-async def cancel_sent_request(user_id:int,receiver_id:int,current_user :str = Depends(get_current_user)):
-    if int(current_user) != user_id:
+async def cancel_sent_request(receiver_id:int,current_user :str = Depends(get_current_user)):
+    
+    if cancel_friend_request(user_id=current_user,receiver_id=receiver_id):
         return ResponsePayLoad(
-            status=False, comments='User not Authorized'
+            status=True, comments='Friend request cancled successfully'
         )
     else:
-        if cancel_friend_request(user_id=user_id,receiver_id=receiver_id):
-            return ResponsePayLoad(
-                status=True, comments='Friend request cancled successfully'
-            )
-        else:
-            return ResponsePayLoad(
-                status=False,
-                comments= 'Failed to cancel friend request'
-            )
+        return ResponsePayLoad(
+            status=False,
+            comments= 'Failed to cancel friend request'
+        )
 
 @app.post('/get_all_friends',response_model=FriendListPayload)
-async def get_friends(user_id:int,current_user=Depends(get_current_user)):
-    if int(current_user) != user_id:
+async def get_friends(current_user=Depends(get_current_user)):
+    
+    status,data = get_all_friends(user_id=current_user)
+    if status:
+        data = convert_friend_list_to_dict(data)
         return FriendListPayload(
-            status=False,comments='User not Authorized',friends=[]
+            status=True,comments='Friends fetched successfully',friends=data
         )
     else:
-        status,data = get_all_friends(user_id=user_id)
-        if status:
-            data = convert_friend_list_to_dict(data)
-            return FriendListPayload(
-                status=True,comments='Friends fetched successfully',friends=data
-            )
-        else:
-            return FriendListPayload(
-                status=False,comments='Failed to fetch friends',friends=[]
-            )
+        return FriendListPayload(
+            status=False,comments='Failed to fetch friends',friends=[]
+        )
         
 @app.post('/remove_friend',response_model=ResponsePayLoad)
-async def remove_friend(user_id:int,friend_id:int,current_user:str = Depends(get_current_user)):
-    if int(current_user) != user_id:
+async def remove_friend(friend_id:FriendIDd,current_user:int = Depends(get_current_user)):
+
+    if unfriend(user_id=current_user,friend_id=friend_id):
         return ResponsePayLoad(
-            status = False, comments = 'User not Authorized'
+            status=True,comments='Friend removed successfully'
         )
     else:
-        if unfriend(user_id=user_id,friend_id=friend_id):
-            return ResponsePayLoad(
-                status=True,comments='Friend removed successfully'
-            )
-        else:
-            return ResponsePayLoad(
-                status = False, comments='Failed to remove friend'
-            )
+        return ResponsePayLoad(
+            status = False, comments='Failed to remove friend'
+        )
         
 
 @app.post('/block_user',response_model=ResponsePayLoad)
-async def block(user_id:int,friend_id:int,current_user:str = Depends(get_current_user)):
-    if int(current_user) != user_id:
+async def block(friend_id:FriendIDd,current_user:int = Depends(get_current_user)):
+    if block_user(user_id=current_user,friend_id=friend_id):
         return ResponsePayLoad(
-            status=False,
-            comments='User not Authorized'
+            status=True,comments='User blocked sucessfully'
         )
     else:
-        if block_user(user_id=user_id,friend_id=friend_id):
-            return ResponsePayLoad(
-                status=True,comments='User blocked sucessfully'
-            )
-        else:
-            return ResponsePayLoad(
-                status=False,comments='Failed to block user'
-            )
+        return ResponsePayLoad(
+            status=False,comments='Failed to block user'
+        )
