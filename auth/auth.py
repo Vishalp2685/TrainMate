@@ -4,6 +4,8 @@ from fastapi import Depends, HTTPException, status
 from datetime import datetime, timedelta, timezone
 import os
 from dotenv import load_dotenv
+import uuid
+import secrets
 
 load_dotenv()
 
@@ -21,12 +23,20 @@ def create_access_token(data: dict, expires_minutes: int = 60):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def create_refresh_token(data: dict, expires_days: int = 30):
-    to_encode = data.copy()
-    # Use timezone-aware datetime
-    expire = datetime.now(timezone.utc) + timedelta(days=expires_days)
-    to_encode.update({"exp": expire, "type": "refresh"})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+def create_refresh_token(data: dict, expires_days: int = 45) -> str:
+    """
+    Generate an opaque refresh token (random string)
+    
+    Args:
+        data: Dictionary containing user info (contains user_id)
+        expires_days: Days until token expires (used in database, not in token itself)
+    
+    Returns:
+        Random opaque token string
+    """
+    # Generate a secure random token (UUID + random string)
+    token = secrets.token_urlsafe(64)
+    return token
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
@@ -48,7 +58,12 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             detail="Token is invalid or expired"
         )
 
-def verify_refresh_token(refresh_token: str):
+def verify_refresh_token(refresh_token: str) -> int:
+    """
+    Note: This function is deprecated with the new token system.
+    Use database.validate_refresh_token() instead for opaque tokens.
+    This is kept for backward compatibility if needed.
+    """
     try:
         payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("type") != "refresh":
@@ -56,7 +71,8 @@ def verify_refresh_token(refresh_token: str):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token type"
             )
-        return payload.get("unique_id")
+        user_id = payload.get("user_id") or payload.get("unique_id")
+        return int(user_id)
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

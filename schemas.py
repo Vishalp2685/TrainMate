@@ -1,9 +1,7 @@
 from pydantic import BaseModel,Field,EmailStr
 from enum import Enum
 from datetime import datetime
-
-class Login(BaseModel):
-    password: str 
+from typing import Optional
 
 class GenderEnum(str, Enum):
     male = "male"
@@ -19,36 +17,77 @@ class User_details(BaseModel):
 class Register(User_details):
     password: str = Field(..., min_length=8)
 
-class LoginResponse(User_details):
-    unique_id: int
+class TravelData(BaseModel):
+    src_lat: float
+    src_long: float
+    dest_lat: float
+    dest_long: float
+    office_name: str
+    start_time: datetime | str
+    end_time: datetime | str
+
+
+class LoginResponse(User_details,TravelData):
+    user_id: int
+    src_lat: Optional[float] = None
+    src_long: Optional[float] = None
+    dest_lat: Optional[float] = None
+    dest_long: Optional[float] = None
+    office_name: Optional[str] = None
+    start_time: Optional[datetime | str] = None
+    end_time: Optional[datetime | str] = None
 
 class ResponsePayLoad(BaseModel):
     status:bool
     comments: str
 
-class LoginResponsePayLoad(ResponsePayLoad):
-    data: LoginResponse | None = None
+class TokenResponsePayload(ResponsePayLoad):
     access_token: str | None = None
-    refresh_token: str | None = None
+    refresh_token : str | None = None
+    device_id: str | None = None
 
-class TravelData(BaseModel):
-    user_id: int
-    src_lat: float
-    src_long: float
-    dest_lat: float
-    dest_long: float
-    office_lat: float
-    office_long: float
-    start_time: str
-    end_time: str
+class LoginResponsePayLoad(TokenResponsePayload):
+    data: LoginResponse | None = None
+    device_id: str | None = None
+    
+class TravelResponsePayload(ResponsePayLoad):
+    data: LoginResponse | None = None
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+class RefreshTokenRequestNew(BaseModel):
+    refresh_token: str
+    device_id: str
 
 class RefreshTokenResponse(BaseModel):
     status:bool
     comments:str
     access_token: str
+
+class RefreshTokenResponseNew(ResponsePayLoad):
+    access_token: str
+    refresh_token: str
+
+class LogoutRequest(BaseModel):
+    device_id: str
+
+class RegisterDeviceRequest(BaseModel):
+    device_id: str
+    fcm_token: str
+    device_name: Optional[str] = None
+    device_type: Optional[str] = None
+
+class DeviceInfo(BaseModel):
+    device_id: str
+    fcm_token: str
+    device_name: Optional[str] = None
+    device_type: Optional[str] = None
+    is_active: bool
+    last_used_at: Optional[datetime] = None
+
+class RegisterDeviceResponse(ResponsePayLoad):
+    device: DeviceInfo | None = None
 
 class recommendation_data(BaseModel):
     user_id: int
@@ -60,8 +99,7 @@ class recommendation_data(BaseModel):
     src_long: float
     dest_lat: float
     dest_long: float
-    office_lat: float
-    office_long: float
+    offine_name : str|None
     start_time: datetime|None
     end_time: datetime|None
 
