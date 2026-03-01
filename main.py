@@ -108,7 +108,9 @@ async def travel_data(data: TravelData, user_id: int = Depends(get_current_user)
         dest_long=data.dest_long,
         office_name = data.office_name,
         start_time=data.start_time,
-        end_time=data.end_time
+        end_time=data.end_time,
+        source_name=data.source_name,
+        dest_name=data.dest_name
     )
     user_data = get_user_data(unique_id = user_id)
     return TravelResponsePayload(

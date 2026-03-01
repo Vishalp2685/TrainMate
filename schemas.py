@@ -22,9 +22,11 @@ class TravelData(BaseModel):
     src_long: float
     dest_lat: float
     dest_long: float
-    office_name: str
+    office_name: str|None = None
     start_time: datetime | str
     end_time: datetime | str
+    source_name: str|None = None
+    dest_name: str|None = None
 
 
 class LoginResponse(User_details,TravelData):

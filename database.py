@@ -101,7 +101,8 @@ def authenticate_user(email, mob_no, password) -> dict:
 def save_travel_data(user_id:int,src_lat:float,src_long:float,
                     dest_lat:float,dest_long:float,
                     office_name:str,
-                    start_time:str,end_time:str):
+                    start_time:str,end_time:str,
+                    source_name:str, dest_name:str):
     try:
         check_query = "Select unique_id from users where unique_id = :user_id"
         with engine.connect() as conn:
@@ -110,9 +111,9 @@ def save_travel_data(user_id:int,src_lat:float,src_long:float,
                 return {'status':False, 'comments':'user_id not found in database or user not registered','data': None}
         with engine.begin() as conn:
             query = """Insert into travel_data(user_id,src_lat,src_long,
-            dest_lat,dest_long,office_name,start_time,end_time)
+            dest_lat,dest_long,office_name,start_time,end_time,source_name,dest_name)
             values(:user_id,:src_lat,:src_long,
-            :dest_lat,:dest_long,:office_name,:start_time,:end_time)
+            :dest_lat,:dest_long,:office_name,:start_time,:end_time,:source_name,:dest_name)
             ON CONFLICT (user_id) DO UPDATE SET
                 src_lat = EXCLUDED.src_lat,
                 src_long = EXCLUDED.src_long,
@@ -120,7 +121,10 @@ def save_travel_data(user_id:int,src_lat:float,src_long:float,
                 dest_long = EXCLUDED.dest_long,
                 office_name = EXCLUDED.office_name,
                 start_time = EXCLUDED.start_time,
-                end_time = EXCLUDED.end_time"""
+                end_time = EXCLUDED.end_time,
+                source_name = EXCLUDED.source_name,
+                dest_name = EXCLUDED.dest_name
+                """
             param = {'user_id': user_id,
                     'src_lat': src_lat,
                     'src_long': src_long,
@@ -128,7 +132,9 @@ def save_travel_data(user_id:int,src_lat:float,src_long:float,
                     'dest_long': dest_long,
                     'office_name': office_name,
                     'start_time': start_time,
-                    'end_time': end_time
+                    'end_time': end_time,
+                    'source_name' : source_name,
+                    'dest_name': dest_name
                     }
             conn.execute(text(query),parameters=param)
             conn.commit()
