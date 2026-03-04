@@ -18,11 +18,11 @@ class Register(User_details):
     password: str = Field(..., min_length=8)
 
 class TravelData(BaseModel):
-    src_lat: float
-    src_long: float
-    dest_lat: float
-    dest_long: float
-    office_name: str|None = None
+    src_lat: Optional[float] = None
+    src_long: Optional[float] = None
+    dest_lat: Optional[float] = None
+    dest_long: Optional[float] = None
+    office_name: Optional[str] = None
     start_time: datetime | str
     end_time: datetime | str
     source_name: str|None = None
@@ -31,11 +31,6 @@ class TravelData(BaseModel):
 
 class LoginResponse(User_details,TravelData):
     user_id: int
-    src_lat: Optional[float] = None
-    src_long: Optional[float] = None
-    dest_lat: Optional[float] = None
-    dest_long: Optional[float] = None
-    office_name: Optional[str] = None
     start_time: Optional[datetime | str] = None
     end_time: Optional[datetime | str] = None
 
@@ -95,15 +90,11 @@ class recommendation_data(BaseModel):
     user_id: int
     first_name: str
     last_name: str
-    gender: GenderEnum
-    email: EmailStr
-    src_lat: float
-    src_long: float
-    dest_lat: float
-    dest_long: float
-    offine_name : str|None
-    start_time: datetime|None
-    end_time: datetime|None
+    office_name : str|None
+    # src_lat: Optional[float] = None
+    # src_long: Optional[float] = None
+    # dest_lat: Optional[float] = None
+    # dest_long: Optional[float] = None
 
 class Recommendations(BaseModel):
     status: bool

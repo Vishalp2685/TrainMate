@@ -74,11 +74,19 @@ def create_user(first_name,last_name,email,mob_no,password,gender)-> dict: # ret
 
 
 def authenticate_user(email, mob_no, password) -> dict:
+    # Select explicit, aliased columns to avoid duplicate column names from JOINs
+    base_query = (
+        "SELECT u.unique_id AS user_id, u.first_name, u.last_name, u.email AS email, u.mob_no, u.gender, u.password,"
+        " t.src_lat AS src_lat, t.src_long AS src_long, t.dest_lat AS dest_lat, t.dest_long AS dest_long,"
+        " t.start_time AS start_time, t.end_time AS end_time, t.office_name AS office_name"
+        " FROM users u LEFT JOIN travel_data t ON u.unique_id = t.user_id"
+    )
+
     if email:
-        query = "SELECT * FROM users u join travel_data t on u.unique_id = t.user_id WHERE u.email = :email"
+        query = base_query + " WHERE u.email = :email"
         params = {"email": email}
     else:
-        query = "SELECT * FROM users u join travel_data t on u.unique_id = t.user_id WHERE u.mob_no = :mob_no"
+        query = base_query + " WHERE u.mob_no = :mob_no"
         params = {"mob_no": mob_no}
 
     try:
@@ -87,8 +95,10 @@ def authenticate_user(email, mob_no, password) -> dict:
         if not data:
             return {'status': False, 'comments': 'User not found','data':data}
         data = dict(data._mapping)
-        hashed_password = data['password'] 
-        del data['password']
+        # password is stored under the explicit key 'password'
+        hashed_password = data.get('password')
+        if 'password' in data:
+            del data['password']
         if verify_passwords(password,hashed_password):
             return {'status': True, 'comments': 'user verified','data':data}
         else:

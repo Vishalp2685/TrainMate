@@ -38,13 +38,15 @@ async def login(data: OAuth2PasswordRequestForm = Depends(), device_id: str = No
         user = authenticate_user(mob_no=username,password=password,email=None)
     
     if user['status']:
-        user_id = user['data']['unique_id']
+        user_id = user['data']['user_id']
+        print(user_id)
         access_token = create_access_token({"user_id": str(user_id)})
         refresh_token = create_refresh_token({"user_id": str(user_id)})
         
         # Store refresh token in database
         token_result = store_refresh_token(user_id=user_id, device_id=device_id, token=refresh_token)
         if not token_result['status']:
+            print(token_result['message'])
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to store token"
@@ -270,10 +272,7 @@ async def recommendations(userid:str = Depends(get_current_user)) -> dict:
     Get reccomended users
     """
     recommended_users = get_reccomendations(userid=int(userid))
-    if recommended_users['status']:
-        users = convert_recommendation_data_to_dict(recommended_users['users'])
-
-    return Recommendations(status=recommended_users['status'],comments=recommended_users['comments'],users_info=users)
+    return Recommendations(status=recommended_users['status'],comments=recommended_users['comments'],users_info=recommended_users['users'])
 
 #_________________________________________________________________________________________________________________________________________#
 
