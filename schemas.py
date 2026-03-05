@@ -144,3 +144,16 @@ class ReceiverId(BaseModel):
 
 class FriendIDd(BaseModel):
     friend_id: int
+
+class SuggestedTrain(BaseModel):
+    train_no: str
+    train_name: str
+    source_station: str
+    dest_station: str
+    departure_time: str
+    arrival_time: str
+
+class TrainSuggestionResponse(BaseModel):
+    status: bool
+    comments: str
+    trains: list[SuggestedTrain]

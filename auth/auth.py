@@ -55,7 +55,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token is invalid or expired"
+            detail="Token is invalid or expired",
+            headers={"WWW-Authenticate": "Bearer"}
         )
 
 def verify_refresh_token(refresh_token: str) -> int:

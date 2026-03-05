@@ -10,7 +10,10 @@ from auth.auth import create_access_token, create_refresh_token, get_current_use
 from fastapi.security import OAuth2PasswordRequestForm
 from reccomend import get_reccomendations
 from Utils.utils import convert_recommendation_data_to_dict,convert_pending_reuqest_to_dict,convert_sent_pending_to_dict,convert_friend_list_to_dict
+from train_services import get_trains_between_stations
+from schemas import TrainSuggestionResponse
 import uuid
+from datetime import datetime
 app = FastAPI()
 
 @app.get('/ping')
@@ -39,7 +42,6 @@ async def login(data: OAuth2PasswordRequestForm = Depends(), device_id: str = No
     
     if user['status']:
         user_id = user['data']['user_id']
-        print(user_id)
         access_token = create_access_token({"user_id": str(user_id)})
         refresh_token = create_refresh_token({"user_id": str(user_id)})
         
@@ -272,9 +274,30 @@ async def recommendations(userid:str = Depends(get_current_user)) -> dict:
     Get reccomended users
     """
     recommended_users = get_reccomendations(userid=int(userid))
-    return Recommendations(status=recommended_users['status'],comments=recommended_users['comments'],users_info=recommended_users['users'])
+    return Recommendations(
+        status=recommended_users['status'],
+        comments=recommended_users['comments'],
+        users_info=recommended_users['users'])
 
 #_________________________________________________________________________________________________________________________________________#
+@app.get('/suggest_trains', response_model=TrainSuggestionResponse)
+async def suggest_trains(
+    src_station_code: str, 
+    dest_station_code: str,
+    user_id: int = Depends(get_current_user)
+):
+    # Get current time in HH:MM:SS format
+    current_time = datetime.now().strftime("%H:%M:%S")
+    print(current_time)
+
+    trains = get_trains_between_stations(src_station_code.upper(), dest_station_code.upper(), current_time)
+    
+    return {
+        "status": True,
+        "comments": "Trains fetched successfully",
+        "trains": trains
+    }
+
 
 @app.post('/send_friend_request',response_model=ResponsePayLoad)
 async def send_request(receiver_id:ReceiverId,current_user:int = Depends(get_current_user))->ResponsePayLoad:
