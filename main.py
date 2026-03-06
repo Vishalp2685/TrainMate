@@ -9,7 +9,7 @@ from schemas import (Register, ResponsePayLoad, TravelData, LoginResponsePayLoad
 from auth.auth import create_access_token, create_refresh_token, get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from reccomend import get_reccomendations
-from Utils.utils import convert_recommendation_data_to_dict,convert_pending_reuqest_to_dict,convert_sent_pending_to_dict,convert_friend_list_to_dict
+from Utils.utils import convert_pending_reuqest_to_dict,convert_sent_pending_to_dict,convert_friend_list_to_dict
 from train_services import get_trains_between_stations
 from schemas import TrainSuggestionResponse
 import uuid
@@ -117,6 +117,7 @@ async def travel_data(data: TravelData, user_id: int = Depends(get_current_user)
         dest_name=data.dest_name
     )
     user_data = get_user_data(unique_id = user_id)
+    print(user_data)
     return TravelResponsePayload(
             status=auth['status'], 
             comments=auth['comments'],
@@ -288,8 +289,7 @@ async def suggest_trains(
 ):
     # Get current time in HH:MM:SS format
     current_time = datetime.now().strftime("%H:%M:%S")
-    print(current_time)
-
+    
     trains = get_trains_between_stations(src_station_code.upper(), dest_station_code.upper(), current_time)
     
     return {

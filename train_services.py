@@ -23,8 +23,8 @@ def get_trains_between_stations(src_code: str, dest_code: str, current_time: str
             WHERE TRIM(t1.[station Code]) = TRIM(?) 
             AND TRIM(t2.[station Code]) = TRIM(?)
 
-            AND CAST(t1.[islno] AS INTEGER) < CAST(t2.[islno] AS INTEGER)
-
+            
+            
             AND time(t1.[Departure time]) >= time(?)
 
             ORDER BY time(t1.[Departure time]) ASC
@@ -33,6 +33,8 @@ def get_trains_between_stations(src_code: str, dest_code: str, current_time: str
         trains = []
         print(rows)
         for row in rows:
+            print("***************")
+            print(row)
             trains.append({
                 "train_no": str(row[0]).strip("'"),
                 "train_name": str(row[1]).strip(),

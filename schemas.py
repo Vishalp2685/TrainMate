@@ -91,10 +91,6 @@ class recommendation_data(BaseModel):
     first_name: str
     last_name: str
     office_name : str|None
-    # src_lat: Optional[float] = None
-    # src_long: Optional[float] = None
-    # dest_lat: Optional[float] = None
-    # dest_long: Optional[float] = None
 
 class Recommendations(BaseModel):
     status: bool

@@ -38,9 +38,10 @@ def get_reccomendations(userid) -> dict:
         office_match = 1 if (office_name and user_office and office_name.strip().lower() == user_office) else 0
         dest_match = 1 if (dest_lat is not None and dest_long is not None and user_dest_lat is not None and user_dest_long is not None and float(dest_lat) == float(user_dest_lat) and float(dest_long) == float(user_dest_long)) else 0
         src_match = 1 if (src_lat is not None and src_long is not None and user_src_lat is not None and user_src_long is not None and float(src_lat) == float(user_src_lat) and float(src_long) == float(user_src_long)) else 0
+        has_office = 1 if (office_name and str(office_name).strip()) else 0
 
         # Score tuple sorts lexicographically; higher tuples come first when reversed
-        score = (office_match, dest_match, src_match)
+        score = (office_match, dest_match, src_match, has_office)
         candidates.append({'user_id': uid, 'first_name': first_name, 'last_name': last_name, 'office_name': office_name, 'score': score})
 
     # Sort by score descending (office match > dest match > src match)

@@ -78,7 +78,7 @@ def authenticate_user(email, mob_no, password) -> dict:
     base_query = (
         "SELECT u.unique_id AS user_id, u.first_name, u.last_name, u.email AS email, u.mob_no, u.gender, u.password,"
         " t.src_lat AS src_lat, t.src_long AS src_long, t.dest_lat AS dest_lat, t.dest_long AS dest_long,"
-        " t.start_time AS start_time, t.end_time AS end_time, t.office_name AS office_name"
+        " t.start_time AS start_time, t.end_time AS end_time, t.office_name AS office_name, t.source_name AS source_name, t.dest_name AS dest_name"
         " FROM users u LEFT JOIN travel_data t ON u.unique_id = t.user_id"
     )
 
@@ -156,7 +156,7 @@ def save_travel_data(user_id:int,src_lat:float,src_long:float,
 def get_user_data(unique_id:int):
     query = '''Select u.unique_id,u.first_name,u.last_name,u.email,
         u.mob_no,u.gender,t.src_lat,t.src_long,t.dest_lat,
-        t.dest_long,t.start_time,t.end_time,t.office_name 
+        t.dest_long,t.start_time,t.end_time,t.office_name,t.source_name,t.dest_name 
         from users u join travel_data t on u.unique_id = t.user_id 
         where u.unique_id =:unique_id
         '''
@@ -166,6 +166,7 @@ def get_user_data(unique_id:int):
             data = conn.execute(text(query),parameters=param).fetchall()
             if data:
                 data = data[0]
+                print(data)
                 user_info = {
                     'user_id':data[0],
                     'first_name':data[1],
@@ -179,7 +180,9 @@ def get_user_data(unique_id:int):
                     'dest_long':data[9],
                     'start_time':data[10],
                     'end_time':data[11],
-                    'office_name':data[12]
+                    'office_name':data[12],
+                    'source_name':data[13],
+                    'dest_name':data[14]
                 }
                 return user_info
             return None
