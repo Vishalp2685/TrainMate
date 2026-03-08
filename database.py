@@ -166,7 +166,6 @@ def get_user_data(unique_id:int):
             data = conn.execute(text(query),parameters=param).fetchall()
             if data:
                 data = data[0]
-                print(data)
                 user_info = {
                     'user_id':data[0],
                     'first_name':data[1],
@@ -271,10 +270,11 @@ def get_pending_requests(user_id):
 
 
 def get_pending_sent_requests(user_id:int):
-    query = '''SELECT *
-            FROM friend_requests
-            WHERE sender_id = :user_id
-            AND status = 'pending';
+    query = '''SELECT f.*, u.first_name, u.last_name
+FROM friend_requests f
+LEFT JOIN users u ON f.sender_id = u.unique_id
+WHERE f.sender_id = :user_id
+AND f.status = 'pending';
             '''
     param = {'user_id':user_id}
     try:
@@ -282,6 +282,7 @@ def get_pending_sent_requests(user_id:int):
             requests = conn.execute(text(query),parameters=param).fetchall()
         return True,requests
     except Exception as e:
+        print(e)
         return False,[]
     
 
@@ -371,7 +372,6 @@ def get_all_friends(user_id):
     try:
         with engine.connect() as conn:
             friends = conn.execute(text(query),parameters=param).fetchall()
-            print(friends)
         return True,friends
     except Exception as e:
         print(e)
@@ -421,6 +421,7 @@ def are_friends(user_id:int,friend_id:int):
         else:
             return False
     except Exception as e:
+        print(e)
         return "Error"
     
 

@@ -3,7 +3,7 @@ from database import *
 from schemas import (Register, ResponsePayLoad, TravelData, LoginResponsePayLoad, 
                      Recommendations,
                      PendingRequestPayload,SentRequestPayload,FriendListPayload,
-                     SenderId,ReceiverId,FriendIDd,TokenResponsePayload,
+                     SenderId,ReceiverId,FriendID,TokenResponsePayload,
                      TravelResponsePayload, RefreshTokenRequestNew, RefreshTokenResponseNew,
                      LogoutRequest, RegisterDeviceRequest, RegisterDeviceResponse, DeviceInfo)
 from auth.auth import create_access_token, create_refresh_token, get_current_user
@@ -48,7 +48,7 @@ async def login(data: OAuth2PasswordRequestForm = Depends(), device_id: str = No
         # Store refresh token in database
         token_result = store_refresh_token(user_id=user_id, device_id=device_id, token=refresh_token)
         if not token_result['status']:
-            print(token_result['message'])
+            
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to store token"
@@ -117,7 +117,6 @@ async def travel_data(data: TravelData, user_id: int = Depends(get_current_user)
         dest_name=data.dest_name
     )
     user_data = get_user_data(unique_id = user_id)
-    print(user_data)
     return TravelResponsePayload(
             status=auth['status'], 
             comments=auth['comments'],
@@ -363,6 +362,7 @@ async def friend_request_accept(sender_id: SenderId,current_user: int = Depends(
     """
     Accept the friend request using sender id and access token
     """
+    sender_id = sender_id.sender_id
     if are_friends(friend_id=sender_id, user_id=current_user):
         return ResponsePayLoad(
             status=False,
@@ -392,6 +392,7 @@ async def decline_friend_request(sender_id:SenderId,current_user:int=Depends(get
     """
     Reject Friend request using sender id and access token
     """
+    sender_id = sender_id.sender_id
     if reject_friend_request(sender_id=sender_id,user_id=current_user):
         return ResponsePayLoad(
             status= True, comments='Successfully rejected the friend request'
@@ -433,11 +434,11 @@ async def get_friends(current_user=Depends(get_current_user)):
         )
         
 @app.post('/remove_friend',response_model=ResponsePayLoad)
-async def remove_friend(friend_id:FriendIDd,current_user:int = Depends(get_current_user)):
+async def remove_friend(friend_id:FriendID,current_user:int = Depends(get_current_user)):
     """
     Unfirend a user using this endpoint, takes friend_id and the access token as paramters
     """
-    if unfriend(user_id=current_user,friend_id=friend_id):
+    if unfriend(user_id=current_user,friend_id=friend_id.friend_id):
         return ResponsePayLoad(
             status=True,comments='Friend removed successfully'
         )
@@ -448,11 +449,11 @@ async def remove_friend(friend_id:FriendIDd,current_user:int = Depends(get_curre
         
 
 @app.post('/block_user',response_model=ResponsePayLoad)
-async def block(friend_id:FriendIDd,current_user:int = Depends(get_current_user)):
+async def block(friend_id:FriendID,current_user:int = Depends(get_current_user)):
     """
     Block a user, takes friend_id and access token
     """
-    if block_user(user_id=current_user,friend_id=friend_id):
+    if block_user(user_id=current_user,friend_id=friend_id.friend_id):
         return ResponsePayLoad(
             status=True,comments='User blocked sucessfully'
         )

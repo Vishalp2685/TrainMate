@@ -105,18 +105,16 @@ class StatusEnum(str,Enum):
 class Friend(BaseModel):
     id:int
     sender_id:int
+    first_name: str
+    last_name : str
     created_at:datetime
 
 class FriendTable(Friend):
     receiver_id:int
     status: StatusEnum
 
-class UserNameandDetails(Friend):
-    first_name:str
-    last_name:str
-
 class PendingRequestPayload(ResponsePayLoad):
-    request: list[UserNameandDetails | None]
+    request: list[Friend | None]
 
 class SentRequestPayload(ResponsePayLoad):
     requests: list[FriendTable|None]
@@ -138,7 +136,7 @@ class SenderId(BaseModel):
 class ReceiverId(BaseModel):
     receiver_id: int
 
-class FriendIDd(BaseModel):
+class FriendID(BaseModel):
     friend_id: int
 
 class SuggestedTrain(BaseModel):
