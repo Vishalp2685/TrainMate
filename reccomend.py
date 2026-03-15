@@ -12,10 +12,41 @@ def get_reccomendations(userid) -> dict:
     user_src_lat = user.get('src_lat')
     user_src_long = user.get('src_long')
 
-    query = '''SELECT u.unique_id as user_id,u.first_name,u.last_name,t.office_name,t.src_lat,t.src_long,t.dest_lat,t.dest_long
-               FROM users u
-               JOIN travel_data t ON u.unique_id = t.user_id
-               WHERE u.unique_id != :userid;'''
+    query = '''SELECT 
+    u.unique_id AS user_id,
+    u.first_name,
+    u.last_name,
+    t.office_name,
+    t.src_lat,
+    t.src_long,
+    t.dest_lat,
+    t.dest_long
+FROM users u
+JOIN travel_data t 
+    ON u.unique_id = t.user_id
+WHERE u.unique_id != :userid
+
+-- exclude users with accepted friend requests
+AND NOT EXISTS (
+    SELECT 1
+    FROM friend_requests fr
+    WHERE (
+        (fr.sender_id = :userid AND fr.receiver_id = u.unique_id)
+        OR
+        (fr.receiver_id = :userid AND fr.sender_id = u.unique_id)
+    )
+)
+
+-- exclude users already in friends table
+AND NOT EXISTS (
+    SELECT 1
+    FROM friends f
+    WHERE (
+        (f.user1_id = :userid AND f.user2_id = u.unique_id)
+        OR
+        (f.user2_id = :userid AND f.user1_id = u.unique_id)
+    )
+);'''
     params = {'userid': userid}
 
     try:
@@ -54,10 +85,6 @@ def get_reccomendations(userid) -> dict:
             'first_name': c['first_name'],
             'last_name': c['last_name'],
             'office_name': c['office_name'],
-            # 'src_lat': None if c.get('src_lat') is None else float(c.get('src_lat')),
-            # 'src_long': None if c.get('src_long') is None else float(c.get('src_long')),
-            # 'dest_lat': None if c.get('dest_lat') is None else float(c.get('dest_lat')),
-            # 'dest_long': None if c.get('dest_long') is None else float(c.get('dest_long')),
         }
         for c in candidates
     ]
