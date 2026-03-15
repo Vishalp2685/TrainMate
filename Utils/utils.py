@@ -50,6 +50,8 @@ def convert_sent_pending_to_dict(requests):
             'id': request[0],
             'sender_id' : request[1],
             'receiver_id' : request[2],
+            'first_name' : request[5],
+            'last_name' : request[6],
             'status': request[3],
             'created_at' : request[4]
         }
