@@ -66,7 +66,13 @@ def convert_friend_list_to_dict(friends):
             'first_name':friend[1],
             'last_name':friend[2],
             'email':friend[3],
-            'gender':friend[4]
+            'gender':friend[4],
+            'source_name':friend[5],
+            'dest_name' : friend[6],
+            'src_lat' : friend[7],
+            'src_long' : friend[8],
+            'dest_lat' : friend[9],
+            'dest_long' : friend[10]
         }
         friends_list.append(info)
     return friends_list
@@ -78,7 +84,8 @@ def convert_friens_at_station(users):
             'user_id' : user[0],
             'first_name' : user[1],
             'last_name' : user[2],
-            'mob_no' : user[3]
+            'mob_no' : user[3],
+            'at_source': user[4]
         }
         converted.append(info)
     return converted

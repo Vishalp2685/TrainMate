@@ -463,12 +463,12 @@ async def block(friend_id:FriendID,current_user:int = Depends(get_current_user))
         )
     
 @app.post('/update_user_status',response_model=ResponsePayLoad)
-def update_status(user_id:int = Depends(get_current_user)):
+def update_status(at_source:bool,user_id:int = Depends(get_current_user)):
     '''
     Use this when user reached the station, to update into the database, every 10 minutes
     ensure user is available at station
     '''
-    status = set_user_status(user_id=user_id)
+    status = set_user_status(user_id=user_id,at_source=at_source)
     return ResponsePayLoad(
         status=status, comments=None
     )

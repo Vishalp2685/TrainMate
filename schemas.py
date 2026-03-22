@@ -126,6 +126,12 @@ class FriendDetails(BaseModel):
     last_name:str
     email:EmailStr
     gender: GenderEnum
+    source_name: str | None
+    dest_name: str | None
+    src_lat: float | None
+    src_long : float | None
+    dest_lat: float | None
+    dest_long : float | None
 
 class FriendListPayload(ResponsePayLoad):
     friends:list[FriendDetails|None]
@@ -157,6 +163,11 @@ class AtStationFriends(BaseModel):
     first_name: str
     last_name: str
     mob_no: str
+    at_source: bool
 
 class AtStationResponsePayload(ResponsePayLoad):
     friends: list[AtStationFriends]
+
+class GenderEnum(str, Enum):
+    male = "male"
+    female = "female"  

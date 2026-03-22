@@ -357,14 +357,28 @@ def cancel_friend_request(user_id:int, receiver_id:int):
         return False
     
 def get_all_friends(user_id):
-    query = '''SELECT u.unique_id,u.first_name,u.last_name,u.email,u.gender
+    query = '''SELECT 
+                u.unique_id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.gender,
+                td.source_name,
+                td.dest_name,
+                td.src_lat,
+                td.src_long,
+                td.dest_lat,
+                td.dest_long
             FROM friends f
             JOIN users u 
             ON u.unique_id = CASE 
-                WHEN f.user1_id = :user_id THEN f.user2_id
-                ELSE f.user1_id
-            END
-            WHERE f.user1_id = :user_id OR f.user2_id = :user_id;
+                    WHEN f.user1_id = :user_id THEN f.user2_id
+                    ELSE f.user1_id
+                END
+            LEFT JOIN travel_data td 
+            ON td.user_id = u.unique_id
+            WHERE f.user1_id = :user_id 
+            OR f.user2_id = :user_id;
             '''
     param = {
         'user_id' : user_id
@@ -762,15 +776,18 @@ def get_user_by_refresh_token(device_id: str, token: str) -> int | None:
         print(f"Error getting user by refresh token: {e}")
         return None
 
-def set_user_status(user_id):
+def set_user_status(user_id,at_source):
     query = '''INSERT INTO user_presence (user_id, is_active, last_seen)
             VALUES (:user_id, TRUE, NOW())
             ON CONFLICT (user_id)
             DO UPDATE SET
             is_active = TRUE,
-            last_seen = NOW();'''
+            last_seen = NOW(),
+            at_source = :at_source;'''
     
-    param = {'user_id':user_id}
+    param = {'user_id':user_id,
+             'at_source':at_source
+             }
 
     try:
         with engine.begin() as conn:
@@ -782,7 +799,7 @@ def set_user_status(user_id):
         return False
     
 def show_friends_availabe_at_station(user_id):
-    query = """SELECT u.unique_id, u.first_name, u.last_name, u.mob_no
+    query = """SELECT u.unique_id, u.first_name, u.last_name, u.mob_no,p.at_source
             FROM users u
             JOIN user_presence p ON u.unique_id = p.user_id
             JOIN friends f 
