@@ -270,11 +270,15 @@ def get_pending_requests(user_id):
 
 
 def get_pending_sent_requests(user_id:int):
-    query = '''SELECT f.*, u.first_name, u.last_name
+    query = '''SELECT 
+    f.*, 
+    u.first_name, 
+    u.last_name
 FROM friend_requests f
-LEFT JOIN users u ON f.sender_id = u.unique_id
+LEFT JOIN users u 
+    ON f.receiver_id = u.unique_id
 WHERE f.sender_id = :user_id
-AND f.status = 'pending';
+  AND f.status = 'pending';;
             '''
     param = {'user_id':user_id}
     try:
