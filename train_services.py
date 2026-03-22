@@ -22,10 +22,8 @@ def get_trains_between_stations(src_code: str, dest_code: str, current_time: str
 
             WHERE TRIM(t1.[station Code]) = TRIM(?) 
             AND TRIM(t2.[station Code]) = TRIM(?)
-
             
-            
-            AND time(t1.[Departure time]) >= time(?)
+            AND time(t1.[Departure time]) >= time(?, '+5 hours', '+30 minutes')
 
             ORDER BY time(t1.[Departure time]) ASC
         """
