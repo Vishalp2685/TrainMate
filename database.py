@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine,text
-from Utils.utils import verify_passwords,encrypt
+from Utils.utils import verify_passwords,encrypt,convert_friens_at_station
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
@@ -467,63 +467,6 @@ def is_blocked(sender_id:int,receiver_id:int):
     except Exception as e:
         return 'Error'
 
-
-# ==================== TOKEN AND DEVICE MANAGEMENT FUNCTIONS ====================
-
-def create_refresh_tokens_table():
-    """Create refresh_tokens table if it doesn't exist"""
-    query = """
-    CREATE TABLE IF NOT EXISTS refresh_tokens (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(unique_id) ON DELETE CASCADE,
-        device_id VARCHAR(255) NOT NULL,
-        token_hash VARCHAR(255) NOT NULL UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expires_at TIMESTAMP NOT NULL,
-        revoked_at TIMESTAMP DEFAULT NULL,
-        last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
-    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_device_id ON refresh_tokens(user_id, device_id);
-    """
-    try:
-        with engine.begin() as conn:
-            for statement in query.split(';'):
-                if statement.strip():
-                    conn.execute(text(statement))
-        return {'status': True, 'message': 'Refresh tokens table created successfully'}
-    except Exception as e:
-        print(f"Error creating refresh_tokens table: {e}")
-        return {'status': False, 'message': f'Error: {e}'}
-
-
-def create_device_tokens_table():
-    """Create device_tokens table if it doesn't exist"""
-    query = """
-    CREATE TABLE IF NOT EXISTS device_tokens (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(unique_id) ON DELETE CASCADE,
-        device_id VARCHAR(255) NOT NULL,
-        fcm_token TEXT NOT NULL,
-        device_name VARCHAR(255),
-        device_type VARCHAR(50),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, device_id)
-    );
-    CREATE INDEX IF NOT EXISTS idx_device_tokens_user_id ON device_tokens(user_id);
-    """
-    try:
-        with engine.begin() as conn:
-            for statement in query.split(';'):
-                if statement.strip():
-                    conn.execute(text(statement))
-        return {'status': True, 'message': 'Device tokens table created successfully'}
-    except Exception as e:
-        print(f"Error creating device_tokens table: {e}")
-        return {'status': False, 'message': f'Error: {e}'}
-
-
 def hash_token(token: str) -> str:
     """Hash a token using SHA256"""
     return hashlib.sha256(token.encode()).hexdigest()
@@ -819,10 +762,43 @@ def get_user_by_refresh_token(device_id: str, token: str) -> int | None:
         print(f"Error getting user by refresh token: {e}")
         return None
 
+def set_user_status(user_id):
+    query = '''INSERT INTO user_presence (user_id, is_active, last_seen)
+            VALUES (:user_id, TRUE, NOW())
+            ON CONFLICT (user_id)
+            DO UPDATE SET
+            is_active = TRUE,
+            last_seen = NOW();'''
+    
+    param = {'user_id':user_id}
 
-# Initialize tables on module import
-try:
-    create_refresh_tokens_table()
-    create_device_tokens_table()
-except Exception as e:
-    print(f"Error initializing tables: {e}")
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(query),parameters=param)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f'Set_status_error: {e}')
+        return False
+    
+def show_friends_availabe_at_station(user_id):
+    query = """SELECT u.unique_id, u.first_name, u.last_name, u.mob_no
+            FROM users u
+            JOIN user_presence p ON u.unique_id = p.user_id
+            JOIN friends f 
+            ON (f.user1_id = :me AND f.user2_id = u.unique_id)
+            OR (f.user2_id = :me AND f.user1_id = u.unique_id)
+            WHERE p.is_active = TRUE
+            AND p.last_seen >= NOW() - INTERVAL '15 minutes';
+            """
+    param = {
+        'me':user_id
+    }
+    try:
+        with engine.connect() as conn:
+            users = conn.execute(text(query),parameters=param).fetchall()
+        users = convert_friens_at_station(users=users)
+        return users
+    except Exception as e:
+        print(f"[Error] in show_available_friends: {e}")
+        return []

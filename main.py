@@ -5,7 +5,7 @@ from schemas import (Register, ResponsePayLoad, TravelData, LoginResponsePayLoad
                      PendingRequestPayload,SentRequestPayload,FriendListPayload,
                      SenderId,ReceiverId,FriendID,TokenResponsePayload,
                      TravelResponsePayload, RefreshTokenRequestNew, RefreshTokenResponseNew,
-                     LogoutRequest, RegisterDeviceRequest, RegisterDeviceResponse, DeviceInfo)
+                     LogoutRequest, RegisterDeviceRequest, RegisterDeviceResponse, DeviceInfo,AtStationResponsePayload)
 from auth.auth import create_access_token, create_refresh_token, get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from reccomend import get_reccomendations
@@ -461,3 +461,25 @@ async def block(friend_id:FriendID,current_user:int = Depends(get_current_user))
         return ResponsePayLoad(
             status=False,comments='Failed to block user'
         )
+    
+@app.post('/update_user_status',response_model=ResponsePayLoad)
+def update_status(user_id:int = Depends(get_current_user)):
+    '''
+    Use this when user reached the station, to update into the database, every 10 minutes
+    ensure user is available at station
+    '''
+    status = set_user_status(user_id=user_id)
+    return ResponsePayLoad(
+        status=status, comments=None
+    )
+
+# show_friends_available
+@app.post('/get_friends_at_station',response_model=AtStationResponsePayload)
+def get_friends_at_station(user_id:int = Depends(get_current_user)):
+    """
+    Use this to get all the friends availabe at station
+    """
+    friends = show_friends_availabe_at_station(user_id=user_id)
+    return AtStationResponsePayload(
+        status=True,comments=None, friends=friends
+    )

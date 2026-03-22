@@ -70,3 +70,15 @@ def convert_friend_list_to_dict(friends):
         }
         friends_list.append(info)
     return friends_list
+
+def convert_friens_at_station(users):
+    converted = []
+    for user in users:
+        info = {
+            'user_id' : user[0],
+            'first_name' : user[1],
+            'last_name' : user[2],
+            'mob_no' : user[3]
+        }
+        converted.append(info)
+    return converted

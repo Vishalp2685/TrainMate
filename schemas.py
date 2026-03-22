@@ -36,7 +36,7 @@ class LoginResponse(User_details,TravelData):
 
 class ResponsePayLoad(BaseModel):
     status:bool
-    comments: str
+    comments: str|None
 
 class TokenResponsePayload(ResponsePayLoad):
     access_token: str | None = None
@@ -151,3 +151,12 @@ class TrainSuggestionResponse(BaseModel):
     status: bool
     comments: str
     trains: list[SuggestedTrain]
+
+class AtStationFriends(BaseModel):
+    user_id: int
+    first_name: str
+    last_name: str
+    mob_no: str
+
+class AtStationResponsePayload(ResponsePayLoad):
+    friends: list[AtStationFriends]
