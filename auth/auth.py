@@ -16,7 +16,7 @@ if not SECRET_KEY:
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
-def create_access_token(data: dict, expires_minutes: int = 60):
+def create_access_token(data: dict, expires_minutes: int = 5):
     to_encode = data.copy()
     # Use timezone-aware datetime
     expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
