@@ -22,7 +22,7 @@ async def ping() -> dict:
 
 
 @app.post('/login',response_model=LoginResponsePayLoad)
-async def login(data: OAuth2PasswordRequestForm = Depends(), device_id: str = None):
+async def login(data: OAuth2PasswordRequestForm = Depends()):
     """
     Login endpoint that supports token rotation with device tracking
     
@@ -30,8 +30,8 @@ async def login(data: OAuth2PasswordRequestForm = Depends(), device_id: str = No
         device_id: Unique device identifier (optional, will auto-generate if not provided)
     """
     # Auto-generate device_id if not provided
-    if not device_id:
-        device_id = f"web-{uuid.uuid4().hex[:8]}"
+    # if not device_id:
+    device_id = f"device-{uuid.uuid4().hex[:64]}"
     
     username = data.username
     password = data.password
@@ -69,15 +69,15 @@ async def login(data: OAuth2PasswordRequestForm = Depends(), device_id: str = No
         )
 
 @app.post('/register/', response_model=TokenResponsePayload)
-async def register(data: Register, device_id: str = None) -> dict:
+async def register(data: Register) -> dict:
     """
     Register endpoint with token generation
     
     Args:
         device_id: Unique device identifier (optional, will auto-generate if not provided)
     """
-    if not device_id:
-        device_id = f"web-{uuid.uuid4().hex[:8]}"  # Auto-generate if not provided
+    # if not device_id:
+    device_id = f"device-{uuid.uuid4().hex[:64]}"
     
     auth = create_user(first_name=data.first_name, last_name=data.last_name, email=data.email, mob_no=data.mob_no, password=data.password,gender=data.gender)
     access_token = None
