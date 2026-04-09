@@ -13,10 +13,12 @@ SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError("JWT_SECRET_KEY environment variable not set")
 
+token_exiry = os.environ.get('JWT_EXPIRY_TIME_MINUTES')
+
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
-def create_access_token(data: dict, expires_minutes: int = 300):
+def create_access_token(data: dict, expires_minutes: int = token_exiry):
     to_encode = data.copy()
     # Use timezone-aware datetime
     expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
