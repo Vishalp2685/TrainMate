@@ -13,7 +13,7 @@ SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError("JWT_SECRET_KEY environment variable not set")
 
-token_exiry = os.environ.get('JWT_EXPIRY_TIME_MINUTES')
+token_exiry = int(os.environ.get('JWT_EXPIRY_TIME_MINUTES'))
 
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
